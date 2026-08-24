@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Games — For You, Dida 🌸</title>
+<meta name="description" content="Play fun mini-games and collect stickers!">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Quicksand:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* ===== ROOT & RESET ===== */
+:root {
+  --pink: #ffd6e8;
+  --lavender: #e3ccff;
+  --mint: #c6f5df;
+  --sky: #c6e6ff;
+  --sun: #fff3b0;
+  --accent: #ff6fa5;
+  --accent-deep: #e8407f;
+  --plum: #5b3a5b;
+  --cream: #fffaf3;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Quicksand', sans-serif;
+  color: var(--plum);
+  background: linear-gradient(180deg, var(--sky) 0%, var(--pink) 35%, var(--lavender) 70%, var(--mint) 100%);
+  background-attachment: fixed;
+  min-height: 100vh;
+}
+h1,h2,h3,.stamp-label { font-family: 'Fredoka', sans-serif; }
+
+/* ===== BUTTONS ===== */
+.btn {
+  font-family: 'Fredoka', sans-serif;
+  background: var(--accent); color: white;
+  border: none; border-radius: 40px;
+  padding: 16px 36px; font-size: 1.15rem;
+  cursor: pointer;
+  box-shadow: 0 6px 0 var(--accent-deep);
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+  position: relative;
+}
+.btn:hover { transform: translateY(-2px); box-shadow: 0 8px 0 var(--accent-deep); }
+.btn:active { transform: translateY(6px); box-shadow: 0 0 0 var(--accent-deep); }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn-gold {
+  background: linear-gradient(135deg, #ffd700, #ffaa00);
+  box-shadow: 0 6px 0 #b8860b;
+  color: #5b3a1b;
+}
+.btn-gold:active { box-shadow: 0 0 0 #b8860b; }
+
+/* ===== CONFETTI ===== */
+.confetti-piece {
+  position: fixed; top: -20px; width: 10px; height: 10px;
+  z-index: 200; pointer-events: none;
+  animation: confettiFall linear forwards;
+}
+@keyframes confettiFall { to { transform: translateY(105vh) rotate(720deg); opacity: 0; } }
+
+/* ===== Sticker Bar ===== */
+#sticker-bar {
+  position: sticky; top: 0; z-index: 50;
+  display: flex; align-items: center; justify-content: center; gap: 16px;
+  padding: 12px 20px;
+  background: rgba(255,255,255,0.8);
+  backdrop-filter: blur(8px);
+  border-bottom: 3px dashed var(--accent);
+}
+.sticker-label { font-family: 'Fredoka'; font-size: 0.95rem; }
+.sticker-slot {
+  width: 52px; height: 52px; border-radius: 50%;
+  background: white;
+  border: 3px dotted #d7a6c4;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 24px;
+  transition: transform 0.4s ease, border-style 0.3s;
+}
+.sticker-slot.filled {
+  border-style: solid;
+  border-color: var(--accent-deep);
+  background: var(--sun);
+  animation: stickerPop 0.5s ease;
+}
+@keyframes stickerPop { 0%{transform:scale(0)} 60%{transform:scale(1.3)} 100%{transform:scale(1)} }
+
+/* Game sections */
+.game-section {
+  padding: 60px 20px 80px;
+  text-align: center;
+  min-height: 80vh;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+}
+.game-card {
+  background: rgba(255,255,255,0.88);
+  border-radius: 28px;
+  max-width: 560px; width: 100%;
+  padding: 40px 30px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+}
+.game-card h2 { color: var(--accent-deep); margin-bottom: 8px; font-size: 1.6rem; }
+.game-card p { margin-bottom: 20px; font-size: 1.05rem; opacity: 0.85; }
+.game-done-msg {
+  margin-top: 16px;
+  font-family: 'Fredoka';
+  color: var(--accent-deep);
+  font-size: 1.1rem;
+  animation: fadeIn 0.5s ease;
+}
+@keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+
+/* ---- Game 1: Spin Wheel ---- */
+.wheel-container {
+  position: relative;
+  width: 280px; height: 280px;
+  margin: 20px auto;
+}
+.wheel-pointer {
+  position: absolute;
+  top: -18px; left: 50%;
+  transform: translateX(-50%);
+  width: 0; height: 0;
+  border-left: 14px solid transparent;
+  border-right: 14px solid transparent;
+  border-top: 26px solid var(--plum);
+  z-index: 5;
+  filter: drop-shadow(0 2px 3px rgba(0,0,0,0.3));
+}
+.wheel {
+  width: 280px; height: 280px;
+  border-radius: 50%;
+  background: conic-gradient(
+    #ff8fab 0deg 45deg,
+    #ffd166 45deg 90deg,
+    #8ecae6 90deg 135deg,
+    #c6f5df 135deg 180deg,
+    #e3ccff 180deg 225deg,
+    #ffb3c6 225deg 270deg,
+    #a0d2db 270deg 315deg,
+    #fff3b0 315deg 360deg
+  );
+  border: 6px solid white;
+  box-shadow: 0 0 0 4px var(--accent), 0 8px 25px rgba(0,0,0,0.15);
+  transition: transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99);
+  position: relative;
+}
+.wheel-center {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%,-50%);
+  width: 44px; height: 44px;
+  background: white;
+  border-radius: 50%;
+  border: 4px solid var(--accent);
+  z-index: 3;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.3rem;
+}
+
+/* ---- Game 2: Catch Hearts ---- */
+.hearts-arena {
+  position: relative;
+  width: 100%; max-width: 480px;
+  height: 320px;
+  margin: 20px auto;
+  border-radius: 20px;
+  background: linear-gradient(180deg, #e8f4ff 0%, #ffe0f0 100%);
+  overflow: hidden;
+  border: 3px solid rgba(255,111,165,0.3);
+  cursor: crosshair;
+}
+.falling-heart {
+  position: absolute;
+  font-size: 2.6rem;
+  padding: 12px;
+  margin: -12px;
+  cursor: pointer;
+  user-select: none;
+  touch-action: manipulation;
+  animation: heartFall linear forwards;
+  z-index: 15;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.15));
+}
+.falling-heart:active { transform: scale(1.4); }
+.falling-heart.caught {
+  animation: heartCatch 0.35s cubic-bezier(0.17, 0.89, 0.32, 1.28) forwards !important;
+  pointer-events: none;
+}
+@keyframes heartFall {
+  0% { transform: translateY(-50px) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(350px) rotate(30deg); opacity: 0.2; }
+}
+@keyframes heartCatch {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(2); opacity: 1; }
+  100% { transform: scale(0); opacity: 0; }
+}
+.hearts-score {
+  position: absolute; top: 12px; right: 16px;
+  font-family: 'Fredoka'; font-size: 1.1rem;
+  background: white; padding: 6px 14px;
+  border-radius: 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  z-index: 5;
+}
+.hearts-score-fill {
+  position: absolute; top: 12px; left: 16px;
+  display: flex; gap: 4px; z-index: 5;
+}
+.score-heart {
+  font-size: 1.2rem;
+  opacity: 0.25;
+  transition: opacity 0.3s, transform 0.3s;
+}
+.score-heart.active { opacity: 1; transform: scale(1.2); }
+
+/* ---- Game 3: Gift Unwrap ---- */
+.gift-area {
+  position: relative;
+  width: 200px; height: 220px;
+  margin: 20px auto;
+  cursor: pointer;
+  user-select: none;
+}
+.gift-box {
+  position: absolute; bottom: 0;
+  width: 180px; height: 140px;
+  left: 50%; transform: translateX(-50%);
+  background: linear-gradient(135deg, var(--accent) 0%, #ff8fab 100%);
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(232,64,127,0.3);
+  overflow: hidden;
+}
+.gift-box::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 50%;
+  transform: translateX(-50%);
+  width: 30px; height: 100%;
+  background: var(--sun);
+}
+.gift-box::after {
+  content: '';
+  position: absolute;
+  left: 0; top: 50%;
+  transform: translateY(-50%);
+  width: 100%; height: 30px;
+  background: var(--sun);
+}
+.gift-lid {
+  position: absolute; bottom: 140px;
+  width: 200px; height: 40px;
+  left: 50%; transform: translateX(-50%);
+  background: linear-gradient(135deg, var(--accent-deep) 0%, var(--accent) 100%);
+  border-radius: 8px 8px 0 0;
+  transition: transform 0.5s ease;
+  z-index: 2;
+}
+.gift-lid::before {
+  content: '';
+  position: absolute;
+  top: -20px; left: 50%;
+  transform: translateX(-50%);
+  width: 50px; height: 40px;
+  border: 6px solid var(--sun);
+  border-bottom: none;
+  border-radius: 25px 25px 0 0;
+}
+.gift-area.opening .gift-lid {
+  transform: translateX(-50%) translateY(-80px) rotate(-30deg);
+}
+.gift-area.shaking {
+  animation: giftShake 0.15s ease;
+}
+@keyframes giftShake {
+  0%,100% { transform: translateX(0); }
+  25% { transform: translateX(-5px) rotate(-2deg); }
+  75% { transform: translateX(5px) rotate(2deg); }
+}
+.gift-progress {
+  width: 180px; height: 14px;
+  background: rgba(255,255,255,0.5);
+  border-radius: 7px;
+  margin: 20px auto 0;
+  overflow: hidden;
+  border: 2px solid rgba(255,111,165,0.3);
+}
+.gift-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), var(--sun));
+  border-radius: 7px;
+  width: 0%;
+  transition: width 0.2s ease;
+}
+.gift-tap-count {
+  font-family: 'Fredoka';
+  font-size: 1.1rem;
+  margin-top: 10px;
+  color: var(--accent-deep);
+}
+.gift-sparkle {
+  position: absolute;
+  font-size: 1.5rem;
+  pointer-events: none;
+  animation: sparkleUp 0.6s ease forwards;
+}
+@keyframes sparkleUp {
+  0% { transform: translateY(0) scale(1); opacity: 1; }
+  100% { transform: translateY(-40px) scale(0); opacity: 0; }
+}
+
+/* ===== UTILITIES ===== */
+.hidden { display: none !important; }
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 600px) {
+  .wheel-container, .wheel { width: 220px; height: 220px; }
+  .hearts-arena { height: 260px; }
+  .game-card { padding: 30px 20px; }
+}
+</style>
+</head>
+<body>
+
+<!-- Sticker Bar -->
+<div id="sticker-bar">
+  <span class="sticker-label">Your stickers:</span>
+  <div class="sticker-slot" id="slot1">?</div>
+  <div class="sticker-slot" id="slot2">?</div>
+  <div class="sticker-slot" id="slot3">?</div>
+</div>
+
+<!-- Game 1: Spin Wheel -->
+<div class="game-section" id="game1-section">
+  <div class="game-card">
+    <h2>🎰 Lucky Spin!</h2>
+    <p>Give the wheel a spin and win your first sticker!</p>
+    <div class="wheel-container">
+      <div class="wheel-pointer"></div>
+      <div class="wheel" id="spin-wheel">
+        <div class="wheel-center">🌟</div>
+      </div>
+    </div>
+    <br>
+    <button class="btn" id="spin-btn" onclick="spinWheel()">SPIN! 🎰</button>
+    <div id="spin-result"></div>
+  </div>
+</div>
+
+<!-- Game 2: Catch Hearts -->
+<div class="game-section" id="game2-section">
+  <div class="game-card">
+    <h2>💖 Catch the Hearts!</h2>
+    <p>Click the falling hearts to catch them! Get 8 to earn your sticker!</p>
+    <div class="hearts-arena" id="hearts-arena">
+      <div class="hearts-score" id="hearts-score">0 / 8</div>
+      <div class="hearts-score-fill" id="hearts-score-fill"></div>
+    </div>
+    <button class="btn" id="hearts-start-btn" onclick="startHeartsGame()">Start! 💖</button>
+    <div id="hearts-result"></div>
+  </div>
+</div>
+
+<!-- Game 3: Gift Unwrap -->
+<div class="game-section" id="game3-section">
+  <div class="game-card">
+    <h2>🎁 Unwrap the Gift!</h2>
+    <p>Tap the gift box rapidly to unwrap your surprise!</p>
+    <div class="gift-area" id="gift-area" onclick="tapGift()">
+      <div class="gift-lid" id="gift-lid"></div>
+      <div class="gift-box"></div>
+    </div>
+    <div class="gift-progress"><div class="gift-progress-fill" id="gift-progress-fill"></div></div>
+    <div class="gift-tap-count" id="gift-tap-count">Tap! 0 / 20</div>
+    <div id="gift-result"></div>
+  </div>
+</div>
+
+<!-- All stickers collected message -->
+<div class="game-section hidden" id="all-collected-section">
+  <div class="game-card" style="background: linear-gradient(135deg, rgba(255,243,176,0.9), rgba(255,214,232,0.9));">
+    <h2 style="font-size:2rem;">🎉 All Stickers Collected!</h2>
+    <p style="font-size:1.2rem;">You did it! Something magical awaits...</p>
+    <button class="btn btn-gold" onclick="window.location.href='treasure.html'" style="font-size:1.2rem;">
+      Open the Treasure! 🗝️
+    </button>
+  </div>
+</div>
+
+<script>
+/* ===== CONFETTI ===== */
+function burstConfetti(count) {
+  const colors = ['#ff8fab', '#ffd166', '#8ecae6', '#c6f5df', '#e3ccff', '#ffb3c6', '#ff6fa5'];
+  for (let i = 0; i < count; i++) {
+    const c = document.createElement('div');
+    c.className = 'confetti-piece';
+    c.style.left = Math.random() * 100 + 'vw';
+    c.style.background = colors[Math.floor(Math.random() * colors.length)];
+    c.style.animationDuration = (1.5 + Math.random() * 2) + 's';
+    c.style.animationDelay = (Math.random() * 0.5) + 's';
+    c.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+    c.style.width = (6 + Math.random() * 8) + 'px';
+    c.style.height = (6 + Math.random() * 8) + 'px';
+    document.body.appendChild(c);
+    setTimeout(() => c.remove(), 4000);
+  }
+}
+
+/* ===== STICKER SYSTEM ===== */
+const stickers = { 1: false, 2: false, 3: false };
+
+function collectSticker(n, emoji) {
+  if (stickers[n]) return;
+  stickers[n] = true;
+  const slot = document.getElementById('slot' + n);
+  slot.textContent = emoji;
+  slot.classList.add('filled');
+  burstConfetti(25);
+  checkAllCollected();
+}
+
+function checkAllCollected() {
+  if (stickers[1] && stickers[2] && stickers[3]) {
+    setTimeout(() => {
+      document.getElementById('all-collected-section').classList.remove('hidden');
+      document.getElementById('all-collected-section').scrollIntoView({ behavior: 'smooth' });
+    }, 800);
+  }
+}
+
+/* ===== GAME 1: SPIN WHEEL ===== */
+let hasSpun = false;
+let wheelRotation = 0;
+
+function spinWheel() {
+  if (hasSpun) return;
+  hasSpun = true;
+  const btn = document.getElementById('spin-btn');
+  btn.disabled = true;
+  btn.textContent = 'Spinning...';
+
+  const wheel = document.getElementById('spin-wheel');
+  const spins = (5 + Math.floor(Math.random() * 3)) * 360;
+  const extra = Math.floor(Math.random() * 360);
+  wheelRotation = spins + extra;
+  wheel.style.transform = 'rotate(' + wheelRotation + 'deg)';
+
+  setTimeout(() => {
+    btn.textContent = '🎉 Won!';
+    document.getElementById('spin-result').innerHTML =
+      '<div class="game-done-msg">You won your first sticker! 🌟</div>';
+    collectSticker(1, '🎰');
+  }, 4200);
+}
+
+/* ===== GAME 2: CATCH HEARTS ===== */
+let heartsScore = 0;
+let heartsGameRunning = false;
+let heartsInterval = null;
+const HEARTS_GOAL = 8;
+
+function startHeartsGame() {
+  if (heartsGameRunning || stickers[2]) return;
+  heartsGameRunning = true;
+  heartsScore = 0;
+  document.getElementById('hearts-start-btn').disabled = true;
+  document.getElementById('hearts-start-btn').textContent = 'Playing...';
+  updateHeartsDisplay();
+  createScoreHearts();
+
+  let spawnDelay = 800;
+  function spawnLoop() {
+    if (!heartsGameRunning) return;
+    spawnHeart();
+    spawnDelay = Math.max(350, spawnDelay - 15);
+    heartsInterval = setTimeout(spawnLoop, spawnDelay);
+  }
+  spawnLoop();
+}
+
+function createScoreHearts() {
+  const fill = document.getElementById('hearts-score-fill');
+  fill.innerHTML = '';
+  for (let i = 0; i < HEARTS_GOAL; i++) {
+    const h = document.createElement('span');
+    h.className = 'score-heart';
+    h.textContent = '💖';
+    h.id = 'sh-' + i;
+    fill.appendChild(h);
+  }
+}
+
+function spawnHeart() {
+  const arena = document.getElementById('hearts-arena');
+  if (!arena || !heartsGameRunning) return;
+  
+  const heartEmojis = ['💖', '💕', '❤️', '💗', '🩷', '💘'];
+  const h = document.createElement('div');
+  h.className = 'falling-heart';
+  h.textContent = heartEmojis[Math.floor(Math.random() * heartEmojis.length)];
+  h.style.left = (5 + Math.random() * 82) + '%';
+  
+  const fallDur = 3.2 + Math.random() * 1.3;
+  h.style.animationDuration = fallDur + 's';
+
+  const catchHandler = function(e) {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    if (h.classList.contains('caught')) return;
+    h.classList.add('caught');
+    heartsScore++;
+    updateHeartsDisplay();
+
+    const sh = document.getElementById('sh-' + (heartsScore - 1));
+    if (sh) sh.classList.add('active');
+
+    if (heartsScore >= HEARTS_GOAL) {
+      heartsGameRunning = false;
+      clearTimeout(heartsInterval);
+      document.getElementById('hearts-start-btn').textContent = '🎉 Done!';
+      document.getElementById('hearts-result').innerHTML =
+        '<div class="game-done-msg">Amazing! Sticker earned! 💖</div>';
+      collectSticker(2, '💖');
+    }
+
+    setTimeout(() => h.remove(), 350);
+  };
+
+  h.addEventListener('pointerdown', catchHandler);
+  h.addEventListener('touchstart', catchHandler, { passive: false });
+  h.addEventListener('click', catchHandler);
+
+  arena.appendChild(h);
+  setTimeout(() => {
+    if (!h.classList.contains('caught')) h.remove();
+  }, (fallDur + 0.2) * 1000);
+}
+
+function updateHeartsDisplay() {
+  document.getElementById('hearts-score').textContent = heartsScore + ' / ' + HEARTS_GOAL;
+}
+
+/* ===== GAME 3: GIFT UNWRAP ===== */
+let giftTaps = 0;
+const GIFT_GOAL = 20;
+let giftDone = false;
+
+function tapGift() {
+  if (giftDone) return;
+  giftTaps++;
+  const area = document.getElementById('gift-area');
+  const fill = document.getElementById('gift-progress-fill');
+  const count = document.getElementById('gift-tap-count');
+
+  area.classList.remove('shaking');
+  void area.offsetWidth;
+  area.classList.add('shaking');
+
+  const sparkle = document.createElement('div');
+  sparkle.className = 'gift-sparkle';
+  sparkle.textContent = ['✨', '⭐', '💫', '🌟'][Math.floor(Math.random() * 4)];
+  sparkle.style.left = (30 + Math.random() * 60) + '%';
+  sparkle.style.top = (10 + Math.random() * 40) + '%';
+  area.appendChild(sparkle);
+  setTimeout(() => sparkle.remove(), 600);
+
+  const pct = Math.min(100, (giftTaps / GIFT_GOAL) * 100);
+  fill.style.width = pct + '%';
+  count.textContent = 'Tap! ' + giftTaps + ' / ' + GIFT_GOAL;
+
+  const hue = (giftTaps / GIFT_GOAL) * 40;
+  area.querySelector('.gift-box').style.filter = 'hue-rotate(' + hue + 'deg)';
+
+  if (giftTaps >= GIFT_GOAL && !giftDone) {
+    giftDone = true;
+    area.classList.add('opening');
+    count.textContent = '🎉 Unwrapped!';
+    document.getElementById('gift-result').innerHTML =
+      '<div class="game-done-msg">The gift is open! Sticker earned! 🎁</div>';
+    collectSticker(3, '🎁');
+  }
+}
+</script>
+
+</body>
+</html>
